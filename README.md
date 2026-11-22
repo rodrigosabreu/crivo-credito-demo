@@ -18,27 +18,25 @@
 
 ```mermaid
 flowchart TD
-    subgraph Client["🌐 Cliente (Browser)"]
-        UI[UI: index.html<br/>vanilla JS + fetch]
-    end
+    %% Cliente
+    UI[UI: index.html<br/>vanilla JS + fetch]
+    
+    %% Servidor Local
+    HTTP[HTTP Server<br/>server.py]
+    ORCH[Orquestração<br/>service.py]
+    ENGINE[Motor Determinístico<br/>engine.py]
+    ANALYST_SIM[Analista Simulado<br/>analyst_simulado]
+    REVIEWER_SIM[Revisor Simulado<br/>reviewer_simulado]
+    DB[(SQLite<br/>runs + events)]
+    
+    %% Modo Hermes Opt-in
+    GATEWAY[Gateway Hermes<br/>127.0.0.1:PORTA]
+    PROFILE_A[Perfil: crivo-analista]
+    PROFILE_R[Perfil: crivo-revisor]
+    PROVIDER[Provedor LLM<br/>externo]
 
-    subgraph Server["🖥️ Servidor Local (127.0.0.1:8000)"]
-        HTTP[HTTP Server<br/>server.py]
-        ORCH[Orquestração<br/>service.py]
-        ENGINE[Motor Determinístico<br/>engine.py]
-        ANALYST_SIM[Analista Simulado<br/>analyst_simulado]
-        REVIEWER_SIM[Revisor Simulado<br/>reviewer_simulado]
-        DB[(SQLite<br/>runs + events)]
-    end
-
-    subgraph HermesOptIn["🔧 Modo Hermes (Opt-in)"]
-        GATEWAY[Gateway Hermes<br/>127.0.0.1:PORTA]
-        PROFILE_A[Perfil: crivo-analista]
-        PROFILE_R[Perfil: crivo-revisor]
-        PROVIDER[Provedor LLM<br/>externo]
-    end
-
-    UI -->|HTTPS (túnel) / HTTP (local)| HTTP
+    %% Conexões
+    UI -->|HTTPS túnel / HTTP local| HTTP
     HTTP --> ORCH
     ORCH --> ENGINE
     ENGINE -->|3 regras versionadas| ORCH
@@ -53,10 +51,11 @@ flowchart TD
     DB --> HTTP
     HTTP --> UI
 
-    classDef local fill:#e8f5e9,stroke:#2e7d32;
-    classDef hermes fill:#fff3e0,stroke:#ef6c00;
-    classDef client fill:#e3f2fd,stroke:#1565c0;
-    class UI,HTTP,ORCH,ENGINE,ANALYST_SIM,REVIEWER_SIM,DB local;
+    %% Estilos
+    classDef local fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef hermes fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+    classDef client fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    class HTTP,ORCH,ENGINE,ANALYST_SIM,REVIEWER_SIM,DB local;
     class GATEWAY,PROFILE_A,PROFILE_R,PROVIDER hermes;
     class UI client;
 ```
