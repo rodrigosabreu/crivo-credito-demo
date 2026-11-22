@@ -87,26 +87,27 @@ flowchart TB
     end
 
     %% Conexões - Modo Padrão
-    User -->|HTTPS túnel / HTTP| Web
-    Web -->|Fetch JSON| API
-    API -->|run(cenario)| SVC
-    SVC -->|Avalia regras| Engine
-    Engine -->|Regras + valor/parcela| SVC
-    SVC -->|Modo padrão| Analyst
-    SVC -->|Modo padrão| Reviewer
-    SVC -->|Persiste| DB
-    API -->|Consulta| DB
-    DB -->|Retorna| API
-    API -->|201 + JSON| Web
-    Web -->|Renderiza| User
+    User --> Web
+    Web --> API
+    API --> SVC
+    SVC --> Engine
+    Engine --> SVC
+    SVC --> Analyst
+    SVC --> Reviewer
+    SVC --> DB
+    API --> DB
+    DB --> API
+    API --> Web
+    Web --> User
 
-    %% Conexões - Modo Hermes
-    SVC -.->|HTTP POST /chat/completions<br/>Modo Hermes| Gateway
-    Gateway -.->|Roteia| ProfileA
-    Gateway -.->|Roteia| ProfileR
-    ProfileA -.->|Completion| Provider
-    ProfileR -.->|Completion| Provider
+    %% Conexões - Modo Hermes (tracejado)
+    SVC -.-> Gateway
+    Gateway -.-> ProfileA
+    Gateway -.-> ProfileR
+    ProfileA -.-> Provider
+    ProfileR -.-> Provider
 
+    %% Rótulos das arestas (via click/hover não suportado, usar legendas)
     %% Estilos
     classDef user fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
     classDef local fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
@@ -120,6 +121,10 @@ flowchart TB
     class Gateway,ProfileA,ProfileR hermes;
     class Provider ext;
 ```
+
+**Legenda das conexões:**
+- **Sólidas (modo padrão)**: User→Web→API→SVC→Engine↔SVC→Analyst/Reviewer, SVC→DB↔API→Web→User
+- **Tracejadas (modo Hermes opt-in)**: SVC→Gateway→ProfileA/ProfileR→Provider
 
 ### Fluxo de Execução (Sequence Diagram)
 
