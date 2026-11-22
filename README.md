@@ -12,22 +12,89 @@
 
 ---
 
-## 📊 Diagrama de Arquitetura
+## 📊 Diagramas
+
+### Arquitetura (Visão Geral)
 
 ```mermaid
 flowchart TD
-    A[Usuário seleciona cenário sintético] --> B[Motor Determinístico<br/>engine.py]
-    B --> C{Regras avaliadas}
-    C -->|1. Presença dos campos| D[Lista de regras<br/>status + evidência]
-    C -->|2. Valores positivos| D
-    C -->|3. Consistência<br/>valor × parcelas = total| D
-    D --> E[Analista Simulado<br/>service.analyst_simulado]
-    E --> F[Parecer: conclusão + texto]
-    F --> G[Revisor Simulado<br/>service.reviewer_simulado]
-    G --> H[Decisão: concorda/contesta/inconclusivo]
-    H --> I[Estado Final: revisao_humana=pendente]
-    I --> J[(SQLite Local<br/>runs + events)]
-    J --> K[UI: resultado + trilha de auditoria]
+    subgraph Client["🌐 Cliente (Browser)"]
+        UI[UI: index.html<br/>vanilla JS + fetch]
+    end
+
+    subgraph Server["🖥️ Servidor Local (127.0.0.1:8000)"]
+        HTTP[HTTP Server<br/>server.py]
+        ORCH[Orquestração<br/>service.py]
+        ENGINE[Motor Determinístico<br/>engine.py]
+        ANALYST_SIM[Analista Simulado<br/>analyst_simulado]
+        REVIEWER_SIM[Revisor Simulado<br/>reviewer_simulado]
+        DB[(SQLite<br/>runs + events)]
+    end
+
+    subgraph HermesOptIn["🔧 Modo Hermes (Opt-in)"]
+        GATEWAY[Gateway Hermes<br/>127.0.0.1:PORTA]
+        PROFILE_A[Perfil: crivo-analista]
+        PROFILE_R[Perfil: crivo-revisor]
+        PROVIDER[Provedor LLM<br/>externo]
+    end
+
+    UI -->|HTTPS (túnel) / HTTP (local)| HTTP
+    HTTP --> ORCH
+    ORCH --> ENGINE
+    ENGINE -->|3 regras versionadas| ORCH
+    ORCH -->|Modo padrão| ANALYST_SIM
+    ORCH -->|Modo padrão| REVIEWER_SIM
+    ORCH -->|Modo Hermes| GATEWAY
+    GATEWAY --> PROFILE_A
+    GATEWAY --> PROFILE_R
+    PROFILE_A --> PROVIDER
+    PROFILE_R --> PROVIDER
+    ORCH --> DB
+    DB --> HTTP
+    HTTP --> UI
+
+    classDef local fill:#e8f5e9,stroke:#2e7d32;
+    classDef hermes fill:#fff3e0,stroke:#ef6c00;
+    classDef client fill:#e3f2fd,stroke:#1565c0;
+    class UI,HTTP,ORCH,ENGINE,ANALYST_SIM,REVIEWER_SIM,DB local;
+    class GATEWAY,PROFILE_A,PROFILE_R,PROVIDER hermes;
+    class UI client;
+```
+
+### Fluxo de Execução (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Usuário
+    participant UI as UI (Browser)
+    participant API as HTTP API
+    participant SVC as service.py
+    participant ENG as engine.py
+    participant ANA as Analista Simulado
+    participant REV as Revisor Simulado
+    participant DB as SQLite
+
+    User->>UI: Seleciona cenário (completo/ausente/divergente/violacao)
+    UI->>API: GET /api/cenarios
+    API-->>UI: Lista de cenários sintéticos
+    User->>UI: Clica "Executar simulação"
+    UI->>API: POST /api/execucoes {cenario}
+    API->>SVC: run(db, cenario)
+    SVC->>ENG: evaluate(case)
+    ENG-->>SVC: Regras {status, evidencia} + valor_por_parcela
+    SVC->>ANA: analyst_simulado(case, rules)
+    ANA-->>SVC: {status: "concluido", texto: "..."}
+    SVC->>REV: reviewer_simulado(case, rules, analysis)
+    REV-->>SVC: {status: "concorda|contesta|inconclusivo", texto: "..."}
+    SVC->>DB: INSERT runs + events
+    DB-->>SVC: OK
+    SVC-->>API: Resultado completo (JSON)
+    API-->>UI: 201 Created + resultado
+    UI->>API: GET /api/execucoes/{id}/eventos
+    API-->>UI: Trilha de auditoria
+    UI-->>User: Exibe resultado + regras + pareceres + eventos
+    Note over User,DB: Estado final: simulacao=true, revisao_humana=pendente
 ```
 
 ---
