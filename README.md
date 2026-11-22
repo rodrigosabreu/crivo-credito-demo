@@ -60,6 +60,67 @@ flowchart TD
     class UI client;
 ```
 
+### Diagrama de Componentes (Container View)
+
+```mermaid
+flowchart TB
+    %% Usuário
+    User[👤 Usuário<br/>Analista / QA]
+    
+    %% Sistema Local
+    subgraph Local["🖥️ Sistema Local (127.0.0.1:8000)"]
+        Web[🌐 Web App<br/>Python + HTML/JS<br/>ThreadingHTTPServer]
+        API[🔌 API REST<br/>http.server<br/>/cenarios, /execucoes]
+        SVC[⚙️ Orquestração<br/>service.py<br/>Coordena fluxo completo]
+        Engine[🧮 Motor de Regras<br/>engine.py<br/>3 regras v1.0 determinísticas]
+        Analyst[🤖 Analista Simulado<br/>função Python<br/>Parecer conclusivo]
+        Reviewer[🔍 Revisor Simulado<br/>função Python<br/>Concorda/Contesta/Inconclusivo]
+        DB[(💾 SQLite<br/>crivo.sqlite3<br/>runs + events)]
+    end
+    
+    %% Modo Hermes Opt-in
+    subgraph Hermes["🔧 Modo Hermes Opt-in (externo)"]
+        Gateway[🚪 Gateway Hermes<br/>Go/HTTP<br/>Loopback only]
+        ProfileA[👤 Perfil: crivo-analista<br/>System prompt + config]
+        ProfileR[👤 Perfil: crivo-revisor<br/>Recebe parecer analista]
+        Provider[☁️ Provedor LLM<br/>OpenAI/Anthropic/etc<br/>Não verificado pela POC]
+    end
+
+    %% Conexões - Modo Padrão
+    User -->|HTTPS túnel / HTTP| Web
+    Web -->|Fetch JSON| API
+    API -->|run(cenario)| SVC
+    SVC -->|Avalia regras| Engine
+    Engine -->|Regras + valor/parcela| SVC
+    SVC -->|Modo padrão| Analyst
+    SVC -->|Modo padrão| Reviewer
+    SVC -->|Persiste| DB
+    API -->|Consulta| DB
+    DB -->|Retorna| API
+    API -->|201 + JSON| Web
+    Web -->|Renderiza| User
+
+    %% Conexões - Modo Hermes
+    SVC -.->|HTTP POST /chat/completions<br/>Modo Hermes| Gateway
+    Gateway -.->|Roteia| ProfileA
+    Gateway -.->|Roteia| ProfileR
+    ProfileA -.->|Completion| Provider
+    ProfileR -.->|Completion| Provider
+
+    %% Estilos
+    classDef user fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef local fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef hermes fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef db fill:#e0f2f1,stroke:#00695c,stroke-width:2px;
+    classDef ext fill:#fce4ec,stroke:#c2185b,stroke-width:2px;
+    
+    class User user;
+    class Web,API,SVC,Engine,Analyst,Reviewer local;
+    class DB db;
+    class Gateway,ProfileA,ProfileR hermes;
+    class Provider ext;
+```
+
 ### Fluxo de Execução (Sequence Diagram)
 
 ```mermaid
