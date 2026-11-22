@@ -1,0 +1,40 @@
+# Binaries
+cloudflared
+ngrok
+*.exe
+
+# Database & local state
+*.sqlite3
+*.db
+*.db-journal
+
+# Secrets
+password
+.env
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+*.temp

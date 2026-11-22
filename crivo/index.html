@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Crivo Crédito — simulação</title><style>body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;background:#f5f7fa;color:#182333}section,article{background:white;padding:1rem;margin:1rem 0;border-radius:8px}strong{color:#8b2600}button,select{padding:.6rem}li{margin:.5rem 0} .alerta{color:#8b2600}</style></head><body>
+<h1>SIMULAÇÃO — Crivo Crédito PF</h1><p><strong>Somente cenários sintéticos. Não é decisão de crédito. Revisão humana pendente.</strong></p><p>Os adaptadores padrão são simulados locais, não LLMs. Concordância não comprova correção.</p>
+<section><label for="case">Cenário fictício:</label> <select id="case"></select> <button id="run">Executar simulação</button><p id="error" role="alert"></p></section>
+<main id="result" aria-live="polite">Selecione um cenário.</main>
+<section><h2>Trilha de eventos</h2><p>Registro local editável; não há garantia de imutabilidade.</p><div id="events"></div></section>
+<script>
+const $=id=>document.getElementById(id); let generation=0;
+function clear(id){$(id).replaceChildren()}
+function add(parent, tag, text){const el=document.createElement(tag);el.textContent=text;parent.append(el);return el}
+function section(parent,title){const s=document.createElement('section');add(s,'h2',title);parent.append(s);return s}
+function showResult(d){
+ clear('result'); const root=$('result');
+ let s=section(root,'Cenário sintético e revisão humana');
+ add(s,'p','Cenário: '+d.cenario.titulo+' ('+d.cenario_id+')');
+ add(s,'p','Identificador da execução: '+d.id);add(s,'p','Revisão humana: pendente — não executada. Não é decisão de crédito.');
+ for(const [k,v] of Object.entries(d.cenario)) if(k!=='titulo') add(s,'p',k+': '+(v===null?'ausente':v));
+ s=section(root,'Política demonstrativa');add(s,'p','Versão: '+d.politica.versao);add(s,'p',d.politica.descricao);
+ s=section(root,'Regras e evidências');const list=add(s,'ul','');for(const rule of d.motor.regras)add(list,'li',rule.regra+' — '+rule.status+' — '+rule.evidencia);
+ add(s,'p','Valor por parcela: '+(d.motor.valor_por_parcela===null?'não calculado':d.motor.valor_por_parcela));add(s,'p',d.motor.nota_calculo);
+ for(const [key,label] of [['analista','Analista'],['revisor','Revisor']]){s=section(root,label);add(s,'p','Origem: '+d.adaptadores[key]);add(s,'p','Estado: '+d[key].status);add(s,'p',d[key].texto)}
+}
+function showEvents(events){clear('events');const list=add($('events'),'ol','');for(const e of events){const item=add(list,'li',e.sequencia+' — '+e.timestamp+' — '+e.tipo);if(e.detalhes && e.detalhes.resultado){add(item,'p','Origem: '+e.detalhes.origem+'; estado: '+e.detalhes.resultado.status+'; '+e.detalhes.resultado.texto)}else if(e.detalhes && e.detalhes.regras){for(const r of e.detalhes.regras)add(item,'p',r.regra+' — '+r.status+' — '+r.evidencia)}else if(e.detalhes && e.detalhes.cenario){add(item,'p','Cenário: '+e.detalhes.cenario+' — '+e.detalhes.fonte)}else if(e.detalhes && e.detalhes.estado){add(item,'p','Estado: '+e.detalhes.estado+' — revisão humana pendente')}}}
+async function load(){try{let r=await fetch('/api/cenarios');if(!r.ok)throw Error();for(const c of await r.json()){let o=document.createElement('option');o.value=c.id;o.textContent=c.titulo;$('case').append(o)}}catch(e){$('error').textContent='Não foi possível carregar cenários.'}}
+$('case').onchange=()=>{generation++;$('error').textContent='';$('result').textContent='Selecione Executar para o cenário escolhido.';clear('events')};
+$('run').onclick=async()=>{const ticket=++generation, scenario=$('case').value;const current=()=>ticket===generation && $('case').value===scenario;try{$('error').textContent='';$('result').textContent='Executando...';clear('events');let r=await fetch('/api/execucoes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cenario:scenario})});if(!current())return;if(!r.ok){if(r.status===503)throw Error('Armazenamento indisponível: operação e auditoria não confirmadas; evento não persistido ou persistência não confirmada.');throw Error('Falha ao executar simulação.')}let data=await r.json();if(!current())return;if(data.cenario_id!==scenario)throw Error('Resposta não corresponde ao cenário selecionado.');showResult(data);let ev=await fetch('/api/execucoes/'+encodeURIComponent(data.id)+'/eventos');if(!current())return;if(!ev.ok)throw Error('Não foi possível carregar a trilha de eventos.');let events=await ev.json();if(!current())return;showEvents(events)}catch(e){if(current()){$('error').textContent=e.message+' Revisão humana não executada.';if(!$('result').querySelector('section'))$('result').textContent='Nenhum resultado confirmado exibido.'}}};load();
+</script></body></html>

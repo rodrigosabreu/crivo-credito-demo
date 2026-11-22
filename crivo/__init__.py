@@ -1,0 +1,1 @@
+"""POC local, exclusivamente sintética."""
