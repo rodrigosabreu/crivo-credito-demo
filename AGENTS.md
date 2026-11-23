@@ -145,6 +145,80 @@ Para cada tarefa neste projeto:
 
 ---
 
+## 🤖 AI-DLC Workspace
+>
+> **Objetivo**: Este projeto integra o AI-DLC (AI Development Lifecycle) para governança, continuidade entre sessões e stage gates com aprovação humana. O workspace AI-DLC é a **source of truth operacional** — o AGENTS.md aponta para ele, não o substitui.
+>
+> ### Estrutura do Workspace
+> ```
+> aidlc/
+> └── spaces/
+>     └── default/
+>         ├── intents/
+>         │   ├── intents.json                      # Índice de intents
+>         │   └── 261123-crivo-credito-stabilize/   # Intent ativo
+>         │       ├── aidlc-state.md                # Estado de execução (fase, stage, next action)
+>         │       ├── project-description.json      # Descrição canônica do projeto
+>         │       ├── ideation/                     # Fase 0 (skipped - brownfield)
+>         │       │   ├── intent-capture/memory.md
+>         │       │   ├── scope-definition/memory.md
+>         │       │   └── approval-handoff/memory.md
+>         │       ├── inception/                    # Fase 1 (FOCO ATUAL)
+>         │       │   ├── reverse-engineering/memory.md
+>         │       │   ├── requirements-analysis/memory.md
+>         │       │   ├── domain-design/memory.md
+>         │       │   ├── contract-design/memory.md
+>         │       │   ├── delivery-planning/memory.md
+>         │       │   └── approval-handoff/memory.md
+>         │       ├── construction/                 # Fase 2 (futuro)
+>         │       └── audit/                        # Trilha de auditoria
+>         └── memory/
+>             ├── project.md                        # Memória do projeto (decisões, ADRs, contexto)
+>             └── phases/
+>                 ├── ideation.md
+>                 ├── inception.md
+>                 ├── construction.md
+>                 └── operation.md
+> ```
+>
+> ### Arquivos Principais
+> | Arquivo | Finalidade | Localização |
+> |---------|------------|-------------|
+> | `aidlc-state.md` | Estado operacional: fase, stage, gate status, next action, baseline commit | `aidlc/spaces/default/intents/261123-crivo-credito-stabilize/aidlc-state.md` |
+> | `project-description.json` | Descrição canônica do projeto (ID, nome, tipo, escopo, status) | `aidlc/spaces/default/intents/261123-crivo-credito-stabilize/project-description.json` |
+> | `project.md` | Memória persistente: decisões, ADRs, gaps, riscos, contexto operacional | `aidlc/spaces/default/memory/project.md` |
+> | `intents.json` | Índice de todos os intents do workspace | `aidlc/spaces/default/intents/intents.json` |
+> | `handoff.md` | Continuidade entre sessões (estendido com campos AI-DLC) | Raiz do projeto (`/handoff.md`) |
+> | ADRs | Decisões arquiteturais (baseline `Implemented` + governança `Proposed`) | `docs/adr/ADR-XXX-*.md` |
+>
+> ### Stage Gates (Aprovação Humana Obrigatória)
+> | Gate | Transição | Aprovador | Status |
+> |------|-----------|-----------|--------|
+> | Gate 0 | Diagnose → Plan | Rodrigo (PM) | ✅ APROVADO |
+> | Gate 1 | Plan → Baseline | Rodrigo (PM) | ✅ APROVADO |
+> | Gate 2 | Baseline → Integrate | Rodrigo (PM) | ⏳ PENDENTE |
+> | Gate 3 | Integrate → Validate | Rodrigo (PM) | ⏳ PENDENTE |
+> | Gate 4 | Validate → Inception | Rodrigo (PM) | ⏳ PENDENTE |
+>
+> **Regra**: Nenhuma transição de fase ocorre sem aprovação registrada no `approval-handoff/memory.md` correspondente e no `handoff.md`.
+>
+> ### Recuperação de Contexto (Nova Sessão)
+> Para retomar trabalho em nova sessão:
+> 1. Leia `handoff.md` na raiz — identifica task, status, next action, aguardando
+> 2. Leia `aidlc-state.md` — identifica fase atual, stage atual, gate status, baseline commit
+> 3. Leia `project.md` — decisões/ADRs, gaps, riscos, contexto operacional
+> 4. Carregue skills necessárias: `skill_view(name='descoberta')`, `skill_view(name='arquitetura')`, `skill_view(name='desenvolvimento')`, `skill_view(name='qualidade')`, `skill_view(name='onboard-ai-dlc')`
+> 5. Execute a **Próxima Ação** do handoff
+>
+> ### Integração com Agentic-Home
+> - **Skills**: `descoberta`, `arquitetura`, `desenvolvimento`, `qualidade`, `onboard-ai-dlc` (carregar via `skill_view()`)
+> - **Templates**: `agentic-home/templates/handoff.md`, `agentic-home/templates/adr.md` (estendidos com campos AI-DLC)
+> - **Catálogo**: `agentic-home/projects/catalogo.md` (entrada `crivo-credito-demo` registrada)
+> - **Governança**: `agentic-home/docs/governanca.md` (stage gates, matriz de permissões)
+> - **Onboarding**: `agentic-home/docs/onboarding.md`
+>
+> ---
+
 ## 📚 Documentação Relacionada
 
 | Documento | Localização |

@@ -1,0 +1,15 @@
+{
+  "intents": [
+    {
+      "id": "261123-crivo-credito-stabilize",
+      "name": "Crivo Crédito Demo Stabilization",
+      "description": "Integrar AI-DLC ao Crivo Crédito Demo (brownfield) para governança, continuidade e stage gates com aprovação humana",
+      "projectRoot": "/opt/data/projects/crivo-credito-demo",
+      "projectType": "brownfield",
+      "scope": "project",
+      "startDate": "2026-11-23T00:00:00Z",
+      "status": "inception",
+      "activeStage": "reverse-engineering"
+    }
+  ]
+}
